@@ -28,6 +28,10 @@ const SignalCard = ({
   description,
   signals,
   imageUrl,
+  setSearchName,
+  setFrequency,
+  setRange,
+  setSignalType,
 }) => {
   return (
     <StyledCard>
@@ -116,37 +120,3 @@ const SignalCard = ({
 };
 
 export default SignalCard;
-
-// Приклад використання
-export const ExampleDroneSignalCard = () => (
-  <SignalCard
-    name="Лелека"
-    maxHeight="1200 м"
-    workHeight="600 м"
-    flightDuration="3 год"
-    flightRange="100 км"
-    cruisingSpeed="60-70"
-    maxSpeed="120"
-    description="Український безпілотний літальний апарат, призначений для ведення розвідки. Електричний двигун. Створений українською компанією DeViRo."
-    imageUrl="/path/to/leleka-image.jpg"
-    signals={[
-      {
-        channel: "Канал телеметрії",
-        frequency: "410-480",
-        features:
-          "Основний канал телеметрії, але при подавленні може передаватися по відеоканалу",
-      },
-      {
-        channel: "Канал цільового навантаження",
-        frequency: "2300, 900",
-        features:
-          "Ширина каналу ≈10МГц, при подавленні може змінювати частоту роботи",
-      },
-      {
-        channel: "Канал управління",
-        frequency: "438-448",
-        features: "Діапазон роботи каналу при «взліт-посадка» ≈2.4ГГц",
-      },
-    ]}
-  />
-);
