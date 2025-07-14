@@ -1,10 +1,18 @@
-import { useState, useMemo } from "react";
-import { Box, Typography, Container } from "@mui/material";
-import { Search as SearchIcon } from "@mui/icons-material";
-import { FilterSearchBar } from "./component/FilterSearchBar";
-import { GridBpLA } from "./component/GridBpLA";
+import { useMemo } from "react";
+import {
+  Box,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Typography,
+  Grid,
+  Paper,
+} from "@mui/material";
+import { Search as SearchIcon, Clear as ClearIcon } from "@mui/icons-material";
 
-// Пример базы данных БпЛА (вынесено из компонента)
 const uavDatabase = [
   {
     id: 1,
@@ -74,11 +82,22 @@ const uavDatabase = [
   },
 ];
 
-const UAVSearchInterface = () => {
-  const [searchName, setSearchName] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [range, setRange] = useState("");
-  const [signalType, setSignalType] = useState("");
+export const FilterSearchBar = ({
+  setSearchName,
+  setFrequency,
+  setRange,
+  setSignalType,
+  searchName,
+  frequency,
+  range,
+  signalType,
+}) => {
+  const clearFilters = () => {
+    setSearchName("");
+    setFrequency("");
+    setRange("");
+    setSignalType("");
+  };
 
   const parseRange = (rangeStr) => {
     if (!rangeStr) return null;
@@ -127,35 +146,81 @@ const UAVSearchInterface = () => {
       return true;
     });
   }, [searchName, frequency, range, signalType]);
-
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      <FilterSearchBar
-        setSearchName={setSearchName}
-        setFrequency={setFrequency}
-        setRange={setRange}
-        setSignalType={setSignalType}
-      />
-      <GridBpLA
-        searchName={searchName}
-        frequency={frequency}
-        range={range}
-        signalType={signalType}
-      />
+    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+      <Box display="flex" alignItems="center" gap={2} mb={3}>
+        <SearchIcon color="primary" fontSize="large" />
+        <Typography variant="h4" component="h1" color="primary">
+          Поиск БпЛА по параметрам
+        </Typography>
+      </Box>
 
-      {filteredUAVs.length === 0 && (
-        <Box textAlign="center" py={8}>
-          <SearchIcon sx={{ fontSize: 60, color: "text.secondary", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            Не найдено БпЛА по заданным критериям
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Попробуйте изменить параметры поиска
-          </Typography>
-        </Box>
-      )}
-    </Container>
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            fullWidth
+            label="Назва БпЛА"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            placeholder="Введите название..."
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            fullWidth
+            label="ЦЧ (МГц)"
+            type="number"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value)}
+            placeholder="2400"
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            fullWidth
+            label="Діапазон (м)"
+            value={range}
+            onChange={(e) => setRange(e.target.value)}
+            placeholder="1000-1500"
+            variant="outlined"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Тип сигнала</InputLabel>
+            <Select
+              value={signalType}
+              onChange={(e) => setSignalType(e.target.value)}
+              label="Тип сигнала"
+            >
+              <MenuItem value="">
+                <em>Выберите тип</em>
+              </MenuItem>
+              <MenuItem value="ФРЧ">ФРЧ</MenuItem>
+              <MenuItem value="ППРЧ">ППРЧ</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Button
+          variant="outlined"
+          startIcon={<ClearIcon />}
+          onClick={clearFilters}
+          color="secondary"
+        >
+          Очистить фильтры
+        </Button>
+        <Typography variant="body1" color="text.secondary">
+          Найдено результатов: {filteredUAVs.length}
+        </Typography>
+      </Box>
+    </Paper>
   );
 };
-
-export default UAVSearchInterface;
