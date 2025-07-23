@@ -1,161 +1,76 @@
-import { useState, useMemo } from "react";
-import { Box, Typography, Container } from "@mui/material";
-import { Search as SearchIcon } from "@mui/icons-material";
-import { FilterSearchBar } from "./component/FilterSearchBar";
-import { GridBpLA } from "./component/GridBpLA";
+import React from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
 
-// Пример базы данных БпЛА (вынесено из компонента)
-const uavDatabase = [
-  {
-    id: 1,
-    name: "DJI Mavic 3",
-    frequency: 2400,
-    range: "900-1500",
-    signalType: "ППРЧ",
-    image:
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop",
-    description: "Профессиональный квадрокоптер для съемки",
-    specs: "Время полета: 46 мин, Камера: 4K/120fps",
+import { store } from './store/store';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './components/Login';
+import SearchPage from './pages/SearchPage';
+import AdminPage from './pages/AdminPage';
+
+// Create Material-UI theme
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
   },
-  {
-    id: 2,
-    name: "Bayraktar TB2",
-    frequency: 1200,
-    range: "5000-15000",
-    signalType: "ФРЧ",
-    image:
-      "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=200&fit=crop",
-    description: "Военный ударный БпЛА",
-    specs: "Время полета: 27 ч, Дальность: 150 км",
-  },
-  {
-    id: 3,
-    name: "DJI Mini 2",
-    frequency: 2400,
-    range: "500-1000",
-    signalType: "ППРЧ",
-    image:
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop",
-    description: "Компактный дрон для начинающих",
-    specs: "Время полета: 31 мин, Вес: 249г",
-  },
-  {
-    id: 4,
-    name: "Shahed-136",
-    frequency: 900,
-    range: "2000-3000",
-    signalType: "ФРЧ",
-    image:
-      "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=200&fit=crop",
-    description: "Камикадзе дрон",
-    specs: "Дальность: 2500 км, Боевая часть: 50 кг",
-  },
-  {
-    id: 5,
-    name: "Reaper MQ-9",
-    frequency: 1800,
-    range: "8000-12000",
-    signalType: "ФРЧ",
-    image:
-      "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=200&fit=crop",
-    description: "Американский военный БпЛА",
-    specs: "Время полета: 14 ч, Дальность: 1850 км",
-  },
-  {
-    id: 6,
-    name: "Phantom 4 Pro",
-    frequency: 2400,
-    range: "1000-1500",
-    signalType: "ППРЧ",
-    image:
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop",
-    description: "Профессиональный квадрокоптер",
-    specs: "Время полета: 30 мин, Камера: 4K/60fps",
-  },
-];
+});
 
-const UAVSearchInterface = () => {
-  const [searchName, setSearchName] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [range, setRange] = useState("");
-  const [signalType, setSignalType] = useState("");
-
-  const parseRange = (rangeStr) => {
-    if (!rangeStr) return null;
-    const parts = rangeStr.split("-");
-    if (parts.length !== 2) return null;
-    const min = parseInt(parts[0]);
-    const max = parseInt(parts[1]);
-    return { min, max };
-  };
-
-  const filteredUAVs = useMemo(() => {
-    return uavDatabase.filter((uav) => {
-      // Фильтр по названию
-      if (
-        searchName &&
-        !uav.name.toLowerCase().includes(searchName.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Фильтр по частоте
-      if (frequency && uav.frequency !== parseInt(frequency)) {
-        return false;
-      }
-
-      // Фильтр по диапазону
-      if (range) {
-        const inputRange = parseRange(range);
-        const uavRange = parseRange(uav.range);
-        if (!inputRange || !uavRange) return false;
-
-        // Проверяем пересечение диапазонов
-        const overlap = Math.max(
-          0,
-          Math.min(inputRange.max, uavRange.max) -
-            Math.max(inputRange.min, uavRange.min)
-        );
-        if (overlap === 0) return false;
-      }
-
-      // Фильтр по типу сигнала
-      if (signalType && uav.signalType !== signalType) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [searchName, frequency, range, signalType]);
-
+function App() {
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      <FilterSearchBar
-        setSearchName={setSearchName}
-        setFrequency={setFrequency}
-        setRange={setRange}
-        setSignalType={setSignalType}
-      />
-      <GridBpLA
-        searchName={searchName}
-        frequency={frequency}
-        range={range}
-        signalType={signalType}
-      />
+    <Provider store={store}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <AuthProvider>
+            <Routes>
+              {/* Login Route */}
+              <Route path="/login" element={<Login />} />
 
-      {filteredUAVs.length === 0 && (
-        <Box textAlign="center" py={8}>
-          <SearchIcon sx={{ fontSize: 60, color: "text.secondary", mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            Не найдено БпЛА по заданным критериям
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Попробуйте изменить параметры поиска
-          </Typography>
-        </Box>
-      )}
-    </Container>
+              {/* Protected Search Route - Available to all authenticated users */}
+              <Route
+                path="/search"
+                element={
+                  <ProtectedRoute>
+                    <SearchPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Admin Route - Available only to admin users */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Default redirect to search page */}
+              <Route path="/" element={<Navigate to="/search" replace />} />
+
+              {/* Catch all other routes and redirect to search */}
+              <Route path="*" element={<Navigate to="/search" replace />} />
+            </Routes>
+          </AuthProvider>
+        </Router>
+      </ThemeProvider>
+    </Provider>
   );
-};
+}
 
-export default UAVSearchInterface;
+export default App;
