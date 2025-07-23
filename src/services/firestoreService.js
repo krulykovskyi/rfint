@@ -10,123 +10,116 @@ import {
   where,
   orderBy,
   limit,
+  serverTimestamp,
 } from 'firebase/firestore';
 
 import { db } from '../config/firebase';
 
-// Collection name - you can change this to match your database structure
-const COLLECTION_NAME = 'items';
+const COLLECTION_NAME = 'signals';
 
-// Search functionality for all users
-export const searchItems = async searchTerm => {
+export const searchSignals = async params => {
+  const { name = '', minFreq, maxFreq, type } = params;
   try {
-    const itemsRef = collection(db, COLLECTION_NAME);
-    let q;
+    const signalsRef = collection(db, COLLECTION_NAME);
+    const conditions = [];
 
-    if (searchTerm.trim() === '') {
-      // If no search term, get all items
-      q = query(itemsRef, orderBy('createdAt', 'desc'), limit(50));
-    } else {
-      // Search by name field (you can modify this based on your data structure)
-      q = query(
-        itemsRef,
-        where('name', '>=', searchTerm),
-        where('name', '<=', searchTerm + '\uf8ff'),
-        orderBy('name'),
-        limit(50)
+    if (name.trim()) {
+      conditions.push(
+        where('name', '>=', name),
+        where('name', '<=', name + '\uf8ff')
       );
+      conditions.push(orderBy('name'));
+    }
+    if (minFreq !== undefined && minFreq !== '') {
+      conditions.push(where('minFreq', '>=', Number(minFreq)));
+    }
+    if (maxFreq !== undefined && maxFreq !== '') {
+      conditions.push(where('maxFreq', '<=', Number(maxFreq)));
+    }
+    if (type) {
+      conditions.push(where('type', '==', type));
     }
 
-    const querySnapshot = await getDocs(q);
+    const q = query(signalsRef, ...conditions, limit(50));
+    const snap = await getDocs(q);
     const items = [];
-    querySnapshot.forEach(doc => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
-
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
     return items;
   } catch (error) {
-    console.error('Error searching items:', error);
+    console.error('Error searching signals:', error);
     throw error;
   }
 };
 
-// Admin functionality - get all items
-export const getAllItems = async () => {
+export const getAllSignals = async () => {
   try {
-    const itemsRef = collection(db, COLLECTION_NAME);
-    const q = query(itemsRef, orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-
+    const signalsRef = collection(db, COLLECTION_NAME);
+    const q = query(signalsRef, orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
     const items = [];
-    querySnapshot.forEach(doc => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
-
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
     return items;
   } catch (error) {
-    console.error('Error getting all items:', error);
+    console.error('Error getting signals:', error);
     throw error;
   }
 };
 
-// Admin functionality - add new item
-export const addItem = async itemData => {
+export const addSignal = async (data, uid) => {
   try {
-    const itemsRef = collection(db, COLLECTION_NAME);
-    const docRef = await addDoc(itemsRef, {
-      ...itemData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const ref = collection(db, COLLECTION_NAME);
+    const docRef = await addDoc(ref, {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      createdBy: uid,
+      updatedBy: uid,
     });
-
-    return { id: docRef.id, ...itemData };
+    const snap = await getDoc(docRef);
+    return { id: docRef.id, ...snap.data() };
   } catch (error) {
-    console.error('Error adding item:', error);
+    console.error('Error adding signal:', error);
     throw error;
   }
 };
 
-// Admin functionality - update item
-export const updateItem = async (itemId, itemData) => {
+export const updateSignal = async (id, data, uid) => {
   try {
-    const itemRef = doc(db, COLLECTION_NAME, itemId);
-    await updateDoc(itemRef, {
-      ...itemData,
-      updatedAt: new Date(),
+    const ref = doc(db, COLLECTION_NAME, id);
+    await updateDoc(ref, {
+      ...data,
+      updatedAt: serverTimestamp(),
+      updatedBy: uid,
     });
-
-    return { id: itemId, ...itemData };
+    const snap = await getDoc(ref);
+    return { id, ...snap.data() };
   } catch (error) {
-    console.error('Error updating item:', error);
+    console.error('Error updating signal:', error);
     throw error;
   }
 };
 
-// Admin functionality - delete item
-export const deleteItem = async itemId => {
+export const deleteSignal = async id => {
   try {
-    const itemRef = doc(db, COLLECTION_NAME, itemId);
-    await deleteDoc(itemRef);
-    return itemId;
+    const ref = doc(db, COLLECTION_NAME, id);
+    await deleteDoc(ref);
+    return id;
   } catch (error) {
-    console.error('Error deleting item:', error);
+    console.error('Error deleting signal:', error);
     throw error;
   }
 };
 
-// Get single item by ID
-export const getItemById = async itemId => {
+export const getSignalById = async id => {
   try {
-    const itemRef = doc(db, COLLECTION_NAME, itemId);
-    const docSnap = await getDoc(itemRef);
-
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() };
-    } else {
-      throw new Error('Item not found');
+    const ref = doc(db, COLLECTION_NAME, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      throw new Error('Signal not found');
     }
+    return { id, ...snap.data() };
   } catch (error) {
-    console.error('Error getting item:', error);
+    console.error('Error getting signal:', error);
     throw error;
   }
 };

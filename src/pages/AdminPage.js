@@ -35,10 +35,10 @@ import {
   deleteAdminItem,
 } from '../store/slices/dataSlice';
 import {
-  getAllItems,
-  addItem,
-  updateItem,
-  deleteItem,
+  getAllSignals,
+  addSignal,
+  updateSignal,
+  deleteSignal,
 } from '../services/firestoreService';
 
 const AdminPage = () => {
@@ -58,7 +58,7 @@ const AdminPage = () => {
   const loadData = async () => {
     try {
       dispatch(setLoading(true));
-      const items = await getAllItems();
+      const items = await getAllSignals();
       dispatch(setAdminData(items));
     } catch (error) {
       dispatch(setError(error.message));
@@ -85,11 +85,11 @@ const AdminPage = () => {
     try {
       if (editingItem) {
         // Update existing item
-        const updatedItem = await updateItem(editingItem.id, formData);
+        const updatedItem = await updateSignal(editingItem.id, formData, user.uid);
         dispatch(updateAdminItem(updatedItem));
       } else {
         // Add new item
-        const newItem = await addItem(formData);
+        const newItem = await addSignal(formData, user.uid);
         dispatch(addAdminItem(newItem));
       }
       handleClose();
@@ -101,7 +101,7 @@ const AdminPage = () => {
   const handleDelete = async itemId => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
-        await deleteItem(itemId);
+        await deleteSignal(itemId);
         dispatch(deleteAdminItem(itemId));
       } catch (error) {
         dispatch(setError(error.message));
