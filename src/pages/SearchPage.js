@@ -27,10 +27,12 @@ import {
   setLoading,
   setError,
 } from '../store/slices/dataSlice';
-import { searchItems } from '../services/firestoreService';
+import { searchSignals } from '../services/firestoreService';
 
 const SearchPage = () => {
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [nameQuery, setNameQuery] = useState('');
+  const [minFreq, setMinFreq] = useState('');
+  const [maxFreq, setMaxFreq] = useState('');
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -41,15 +43,16 @@ const SearchPage = () => {
   const { user, isAdmin } = useSelector(state => state.auth);
 
   useEffect(() => {
-    // Load initial data on component mount
-    handleSearch('');
+    handleSearch({});
   }, []);
 
-  const handleSearch = async (query = localSearchQuery) => {
+  const handleSearch = async (
+    params = { name: nameQuery, minFreq, maxFreq }
+  ) => {
     try {
       dispatch(setLoading(true));
-      dispatch(setSearchQuery(query));
-      const results = await searchItems(query);
+      dispatch(setSearchQuery(params));
+      const results = await searchSignals(params);
       dispatch(setSearchResults(results));
     } catch (error) {
       dispatch(setError(error.message));
@@ -108,13 +111,13 @@ const SearchPage = () => {
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box component="form" onSubmit={handleSearchSubmit}>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={10}>
+              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  label="Search items..."
+                  label="Name"
                   variant="outlined"
-                  value={localSearchQuery}
-                  onChange={e => setLocalSearchQuery(e.target.value)}
+                  value={nameQuery}
+                  onChange={e => setNameQuery(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -122,6 +125,26 @@ const SearchPage = () => {
                       </InputAdornment>
                     ),
                   }}
+                />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Min Freq"
+                  variant="outlined"
+                  value={minFreq}
+                  onChange={e => setMinFreq(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Max Freq"
+                  variant="outlined"
+                  value={maxFreq}
+                  onChange={e => setMaxFreq(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={2}>
@@ -140,13 +163,15 @@ const SearchPage = () => {
         </Paper>
 
         {/* Current Search Query */}
-        {searchQuery && (
+        {searchQuery && Object.keys(searchQuery).length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Chip
-              label={`Search: "${searchQuery}"`}
+              label={`Name: ${searchQuery.name || ''} Freq: ${searchQuery.minFreq || ''}-${searchQuery.maxFreq || ''}`}
               onDelete={() => {
-                setLocalSearchQuery('');
-                handleSearch('');
+                setNameQuery('');
+                setMinFreq('');
+                setMaxFreq('');
+                handleSearch({});
               }}
               color="primary"
               variant="outlined"

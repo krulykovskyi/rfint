@@ -5,7 +5,7 @@ const initialState = {
   adminData: [],
   loading: false,
   error: null,
-  searchQuery: '',
+  searchQuery: {},
 };
 
 const dataSlice = createSlice({
